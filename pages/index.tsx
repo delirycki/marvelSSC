@@ -4,29 +4,39 @@ import Head from 'next/head'
 import Link from "next/link";
 import styles from '../styles/Home.module.css'
 import React, { useState, useEffect } from "react";
+// @ts-ignore
+import MD5 from "crypto-js/md5";
 
-const Home: NextPage = () => {
-  const [heroes, setHeroes] = useState<any>([]);
+const timestamp = new Date().getTime();
+const apikey = "911d546bd79d3f82f8c8b80f8db09803"
+const privkey = "8a2bc7b571c1c73e1df78efce097299714bab191"
+const hashh = timestamp+privkey+apikey
 
-  useEffect(() => {
-    async function getHeroes() {
-      const resp = await fetch(
-        "https://gateway.marvel.com:443/v1/public/characters?limit=10&apikey=911d546bd79d3f82f8c8b80f8db09803&hash=8a2bc7b571c1c73e1df78efce097299714bab191"
-      );
-      setHeroes( await resp.json());
-    }
-    getHeroes();
-  }, []);
+const hash = MD5(hashh).toString()
+const url = `https://gateway.marvel.com:443/v1/public/characters?limit=10&ts=${timestamp}&apikey=${apikey}&hash=${hash}`
+export async function getServerSideProps() {
+  const resp = await fetch(url);
+
+  return {
+    props: {
+      data: await resp.json(),
+    },
+  };
+}
+
+export default function Home ({data}:{data:any}):any {
+  
+ const heroes = data?.data?.results
   
 
-  return (
+    return (
     <div className={styles.container}>
       <Head>
         <title>Marver Heroes List</title>
       </Head>
       <h2>Marver Heroes List</h2>
       <div className={styles.grid}>
-        {heroes.data?.results?.map((hero:any) => (
+        {heroes?.map((hero:any) => (
           <div className={styles.card} key={hero.id}>
             <Link href={`/hero/${hero.id}`}>
               <a>
@@ -44,4 +54,3 @@ const Home: NextPage = () => {
   )
 }
 
-export default Home

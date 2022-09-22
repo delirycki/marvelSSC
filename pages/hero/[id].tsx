@@ -4,31 +4,35 @@ import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import styles from "../../styles/Details.module.css";
+// @ts-ignore
+import MD5 from "crypto-js/md5";
 
-export default function Details() {
-  const {
-    query: { id },
-  } = useRouter();
+const timestamp = new Date().getTime();
+const apikey = "911d546bd79d3f82f8c8b80f8db09803"
+const privkey = "8a2bc7b571c1c73e1df78efce097299714bab191"
+const hashh = timestamp+privkey+apikey
 
-  const [hero, setHero] = useState<any>(null);
+const hash = MD5(hashh).toString()
 
-  useEffect(() => {
-    async function getHero() {
-      const resp = await fetch(
-        `https://gateway.marvel.com:443/v1/public/characters/${id}?apikey=911d546bd79d3f82f8c8b80f8db09803&hash=8a2bc7b571c1c73e1df78efce097299714bab191`
+export async function getServerSideProps({ params }:{params : any }) {
+  const resp = await fetch(
+    `https://gateway.marvel.com:443/v1/public/characters/${params.id}?ts=${timestamp}&apikey=${apikey}&hash=${hash}`
+  );
 
-      );
-        const data = await resp.json()
-      setHero(data.data.results[0]);
-    }
-    if (id) {
-      getHero();
-    }
-  }, [id]);
+  return {
+    props: {
+      data: await resp.json(),
+    },
+  };
+}
 
-  if (!hero) {
+export default function Details({data}:{data:any}) {
+  
+
+  if (!data) {
     return null;
   }
+  const hero = data.data.results[0]
   console.log(hero)
 
   return (
@@ -45,7 +49,7 @@ export default function Details() {
         <div>
           <img
             className={styles.picture}
-            src={hero.thumbnail.path + `/portrait_incredible.`+ hero.thumbnail.extension}
+            src={hero.thumbnail?.path + `/portrait_incredible.`+ hero.thumbnail?.extension}
             alt={hero.name}
           />
         </div>
